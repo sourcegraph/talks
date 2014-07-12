@@ -21,6 +21,8 @@ Sourcegraph
 - Why Go?
 - How we built Sourcegraph using Go
 
+Video at [[https://www.youtube.com/watch?v=-DpKaoPz8l8]]
+
 
 
 > ABSTRACT (NOT TO BE SPOKEN)
@@ -35,26 +37,7 @@ Sourcegraph
 > consistent API across multiple client and server layers, the creation of an
 > extensible language handler system to allow external contributions, and the
 > use of global state to simplify interface design.
->
-> @Google folks: Some of the slides and speaker notes refer to things we're beta
-> testing and haven't released yet, such as the new design in the screenshots
-> and the local command-line tool that people can run. We'll release these
-> before the talk.
 
-# The 3 high-level goals are to: (1) argue for an approach to building things in
-# Go by embracing language features and taking inspiration from the stdlib; (2)
-# provide useful real-world examples of things built in Go using this approach;
-# and (3) demonstrate that Go is well suited for building large systems like
-# Sourcegraph.
-#
-# The intended audience is intermediate and advanced programmers who work in any
-# language but are capable of understanding Go's core concepts (interfaces,
-# packages, etc.) given a brief description. The talk should be especially but
-# not exclusively valuable to Go programmers.
-#
-# The total length is 45 minutes, with 35 minutes for the talk and 10 minutes
-# for Q&A.
-#
 # Google I/O 2014 schedule links:
 #
 # Jun 25 3:10 PM - 3:55 PM: https://www.google.com/events/io/schedule/session/5e5915de-0ce1-e311-b297-00155d5066d7
@@ -137,7 +120,7 @@ Sourcegraph was inspired by Go. What if every language had a `godoc` that:
 
 > I'm going to show you how we built our web application.
 
-* 
+*
 
 .image webappstruct.svg 640 1150
 
@@ -792,9 +775,9 @@ Or t-shirts?
 
 
 # * Architecture
-# 
+#
 # .image arch.svg 662 883
-# 
+#
 # > Here's our architecture. There are 3 main parts: the web server, which serves
 # > an HTML frontend and a JSON API; the datastore, which hits PostgreSQL and our
 # > distributed filesystem for Git and Mercurial data; and the code analyzer and
