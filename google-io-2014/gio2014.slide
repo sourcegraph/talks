@@ -1,0 +1,806 @@
+Sourcegraph: A large-scale code search engine in Go
+Google I/O 2014
+15:10 25 Jun 2014
+Tags: googleio, go, sourcegraph
+
+Quinn Slack
+Sourcegraph
+[[https://sourcegraph.com]]
+@sqs
+@srcgraph
+
+# Speaker notes are on lines beginning with ">". On the presentation web page, hit 'n' to toggle displaying the notes.
+
+####################################################################################################
+# OVERVIEW
+####################################################################################################
+
+* Overview
+
+- What is Sourcegraph?
+- Why Go?
+- How we built Sourcegraph using Go
+
+
+
+> ABSTRACT (NOT TO BE SPOKEN)
+>
+> This talk is a tour of Sourcegraph, a large-scale code search engine written
+> in Go. Sourcegraph analyzes and indexes code in 5 programming languages and
+> hundreds of thousands of open-source repositories, making code search and live
+> usage examples available at Sourcegraph.com. The focus is on how Go's language
+> features and stdlib simplify building a large application such as ours, with
+> in-depth explanations of challenges we faced and the solutions (with code) we
+> chose. The specific topics covered are the use of Go interfaces to maintain a
+> consistent API across multiple client and server layers, the creation of an
+> extensible language handler system to allow external contributions, and the
+> use of global state to simplify interface design.
+>
+> @Google folks: Some of the slides and speaker notes refer to things we're beta
+> testing and haven't released yet, such as the new design in the screenshots
+> and the local command-line tool that people can run. We'll release these
+> before the talk.
+
+# The 3 high-level goals are to: (1) argue for an approach to building things in
+# Go by embracing language features and taking inspiration from the stdlib; (2)
+# provide useful real-world examples of things built in Go using this approach;
+# and (3) demonstrate that Go is well suited for building large systems like
+# Sourcegraph.
+#
+# The intended audience is intermediate and advanced programmers who work in any
+# language but are capable of understanding Go's core concepts (interfaces,
+# packages, etc.) given a brief description. The talk should be especially but
+# not exclusively valuable to Go programmers.
+#
+# The total length is 45 minutes, with 35 minutes for the talk and 10 minutes
+# for Q&A.
+#
+# Google I/O 2014 schedule links:
+#
+# Jun 25 3:10 PM - 3:55 PM: https://www.google.com/events/io/schedule/session/5e5915de-0ce1-e311-b297-00155d5066d7
+#
+# Jun 26 10:05 AM - 10:50 AM: https://www.google.com/events/io/schedule/session/0632a768-0de1-e311-b297-00155d5066d7
+
+
+* Sourcegraph: a code search engine written in Go
+
+- Analyzes & indexes open-source code on GitHub, Google Code, etc.
+- Shows all usage examples of any function/etc., across the open-source world
+- Searches by function, type, package, etc. (not just full-text search)
+- Supports Go, Python, JavaScript, Ruby, and (soon) Java
+
+Free and (mostly) open source: [[https://sourcegraph.com][sourcegraph.com]]
+
+> Before we dive in to implementation, I want to give you some context about
+> what Sourcegraph is and why we chose Go.
+>
+> Sourcegraph.com is a code search site, kind of like godoc plus GitHub, with
+> hundreds of thousands of repositories pre-indexed in Go, Python, Ruby,
+> JavaScript, and, soon, Java. What makes Sourcegraph different is that
+> Sourcegraph actually performs advanced type analysis on the code, instead of
+> just indexing the raw text of the code.
+>
+> TODO(sqs): change this to "Why we built Sourcegraph" instead of just a boring
+> description.
+
+* Demo
+
+.image sourcegraph-search-screenshot.png 262 841
+.image sourcegraph-code-screenshot.png 305 966
+
+
+* Why Go?
+
+Sourcegraph has been written in Go since day 1.
+
+- Prototyping Sourcegraph in Go was easy thanks to `go/doc` and `go/types`.
+
+Sourcegraph was inspired by Go. What if every language had a `godoc` that:
+
+- works on any codebase (no configuration required)
+- is public
+- is globally searchable
+- supports global cross-references (aka usage examples)
+
+> There are 2 questions to answer about "Why Go?". The first is, "Why did we
+> choose Go?" And the second is "Why do we still like Go?"
+>
+> The answer to the first, "Why did we choose Go?", is easy. No other language
+> makes analyzing its own source code as easy as Go, so Go was the natural
+> choice to use to prototype Sourcegraph.
+>
+> Actually, it might be more accurate to say that Go chose us. When we first
+> tried godoc, we loved it. We thought it would be super useful if a similar
+> tool existed for every other language that was public and pre-loaded with all
+> the open source code in the world. That would let you also see usage examples
+> for way more functions and let you discover useful packages that you hadn't
+> heard of. That's what Sourcegraph is today. So, we owe a lot to the Go team's
+> vision of how programming tools should be.
+>
+> The answer to the second question, "Why do we still like and use Go?", is way
+> more important, of course. The rest of the talk will answer that.
+
+
+* Building Sourcegraph with Go
+
+* Parts
+
+- A large Go web app with an HTML frontend, JSON API, and SQL DB
+- A standalone Go CLI tool that builds and analyzes projects' code
+
+> There are two parts: a CLI tool that analyzes code in repositories, and a web
+> app that displays and serves the data.
+>
+> Let's start with the web app, since we just saw it in action.
+
+* Part 1: structure of a large Go web app
+
+> I'm going to show you how we built our web application.
+
+* 
+
+.image webappstruct.svg 640 1150
+
+> Our app has 3 layers: the web frontend, which returns HTML; the HTTP API,
+> which returns JSON; and the data store, which runs SQL queries against our
+> database and returns the results as Go structs or slices. So, basically, our
+> frontend is like just another API client to our own API.
+>
+> For example, if you go to a repository's page on Sourcegraph, our web frontend
+> will make a bunch of calls to our API to gather the data it needs. The API
+> will in turn call into the data store, which queries the database. The API
+> turns the results into JSON and sends them back to the web frontend, which
+> renders an HTML template using the data.
+>
+> This structure is pretty common for large web apps, and there are some nice
+> ways Go makes it super simple to implement.
+
+
+* Implementation: avoiding complexity and repetition
+
+- No framework
+- Using interfaces
+- High-quality API client as a side effect
+- Unifying URL routing and generation
+- Sharing parameter structs
+# - Caching
+# - Errors
+# - Pagination
+# - Response metadata (such as total result counts)
+# - Mocking
+
+> Our goal, based on our experience with similar systems, was to avoid
+> complexity and repetition. Large web apps can easily become complex because
+> they almost always need to twist the abstractions of whatever framework you're
+> using. And "service-oriented" architectures can require lots of repetitive
+> code because not only do you have a client and server implementation for each
+> service, but you often find yourself representing the same concepts at
+> multiple levels of abstraction.
+>
+> Fortunately, Go and a few libraries make it relatively simple to avoid these
+> issues, and I'll run you through what we do.
+
+
+* No framework
+
+We define our handlers with an error return:
+
+ func serveXYZ(w http.ResponseWriter, r *http.Request) error { ... }
+
+Plus a simple wrapper function to make them `http.Handler`, check auth, etc.
+
+Uses global vars instead of per-request context for DB, config, etc.
+
+Routes with gorilla/mux.
+
+Renders HTML:
+
+ func executeTemplate(req *http.Request, resp http.ResponseWriter, tmplName string,
+                      status int, header http.Header, tmplData interface{}) error { ... }
+
+Writes JSON:
+
+ func writeJSON(w http.ResponseWriter, v interface{}) error { ... }
+
+> We use `net/http` and the `gorilla/mux` router instead of a web framework. As
+> I said, we have found that large web apps push the limits of web frameworks
+> anyway, and a lot of the value they provide in other languages is unnecessary
+> in Go.
+>
+> For example, for handling errors in handlers, we just make our handler
+> functions return errors and check for the errors in a HandlerFunc wrapper.
+>
+> Instead of relying on a framework to inject context for the request, we just
+> eliminated per-request context. We store all that stuff as global variables.
+> As I mentioned earlier, in Go, global variables are possible and cool again.
+>
+> And we have a few helper functions to return various kinds of results.
+>
+> To come up with this structure, we looked around for examples of large Go web
+> apps and couldn't find any. We did find godoc.org's source code, which is what
+> this is patterned after, so thanks to Gary Burd.
+
+* Unify API client and data store interfaces
+
+The API client and data store should both implement the same interfaces:
+
+.code p3/app.go /START SVC/,/END SVC/
+
+- API client methods fetch from HTTP API
+- Data store methods fetch from the DB
+
+> The way we started was to determine what the interfaces to our data were.
+>
+> Here's our repositories interface, for example. We of course have an API
+> client method for fetching a repository from our HTTP API. And, surprise, we
+> also have a data store method that fetches a repository from the database.
+>
+> When we started this refactor, the client and data store implementations were
+> a bit different. They accepted different (but similar) parameters and returned
+> different types.
+>
+> Unifying them took away a tiny bit of expressive power but made our API way
+> cleaner and simpler overall. We now have a single interface that runs through
+> our entire system, with a single set of method behaviors, parameters, return
+> values, error behaviors, etc., no matter whether you're using our API client
+> or data store.
+
+
+* Data store methods
+
+.code p3/app.go /START STORE/,/END STORE/
+
+> So, here's a simplified version of the data store implementation of our
+> Repository Get method.
+
+* API client methods
+
+.code p3/app.go /START CLIENT/,/END CLIENT/
+
+> Here's what the client's Get method looks like.
+>
+> (We'll revisit URL generation later, by the way.)
+>
+> So, we've now unified the interface to our API and data store. Let's see what
+> other nice things come out of designing our app in this way.
+
+* Simpler frontend and API http.Handlers
+
+Frontend handler:
+
+.play p3/app.go /START FRONTEND/,/END FRONTEND/
+
+API handler:
+
+ var repoStore RepositoriesService = &repoStore{dbh}
+
+ func serveRepository(w http.ResponseWriter, r *http.Request) error {
+ 	rp, err := repoStore.Get(mux.Vars(r)["Repo"])
+ 	if err != nil {
+ 		return repositoryError(err)
+ 	}
+        writeLastModifiedHeader(rp.UpdatedAt)
+ 	return writeJSON(w, rp)
+ }
+
+
+> Initially our frontend web app just called the data store functions directly.
+> This meant that each handler mixed HTTP and database code in ad-hoc ways. It
+> was messy.
+>
+> Now our handlers have very clearly delineated responsibilities. The frontend
+> handlers do HTML templating and call an API client method. The API handlers do
+> HTTP auth and caching and call a data store method.
+
+
+* Other API benefits
+
+- Dogfooding our API improves quality.
+- We can use standard HTTP load balancing, caching, and authz schemes in our API.
+
+> TODO(sqs): speaker notes
+>
+> *DEMO*: Click Run, then go to
+> http://localhost:7777/repos/github.com/golang/groupcache in a browser.
+
+
+* Unifying URL routing and generation
+
+Separate the route definition from the mounting of handlers:
+
+.code p3/app.go /START API ROUTER/,/END API ROUTER/
+
+> Remember back to our API client implementation? We used `Sprintf` to construct
+> the URL string. And here in the router definition, we repeat the same URL
+> pattern. This is bad, because we have more than 75 routes, some with fairly
+> complex matching logic, and it's easy to get them out of sync.
+>
+> To solve this, use a router package (such as gorilla/mux) that lets you define
+> routes and mount handlers separately. Our server mounts handlers by looking up
+> named routes we've defined, but our API client will just use the route
+> definitions to generate URLs.
+
+* Generating URLs using the router
+
+In your API client, generate the URL from the corresponding route definition:
+
+.code p3/app.go /START CLIENT LIST/,/END CLIENT LIST/
+
+> And here's what the code looks like. Notice that we're not hardcoding any
+> URLs, so if we update the route definitions, our generated URLs will
+> automatically be updated as well.
+>
+> We've actually made our route definitions open source, as part of our open
+> source client library. Our API server imports the client library, which is
+> where the route definitions live, and just mounts handlers as we saw on the
+> previous slide. So, there's no way they can be out of sync.
+
+* Sharing parameter structs
+
+.code p3/app.go /START SEARCH OPTIONS/,/END SEARCH OPTIONS/
+
+.play p3/app.go /START API SEARCH/,/END API SEARCH/
+
+.code p3/app.go /START CLIENT SEARCH/,/END CLIENT SEARCH/
+
+> Most of the methods in our API take some main arguments and some extra
+> parameters. In URLs, the parameters are in the querystring; in Go function
+> calls, they're a final struct pointer argument.
+>
+> Initially we had 3 different parameter sets for each logical interface method:
+> the frontend querystring parameters, the API querystring parameters, and the
+> data store method parameters. These differed mainly in the names of properties
+> and were easy to unify. Once they were unified, of course, the Go compiler
+> helped us avoid mistakes.
+>
+> To do this, we defined the querystring as a Go struct, like SearchOptions
+> here. In each HTTP handler, we use gorilla/schema to decode the querystring
+> into the Go struct. And in the API client, we use Will Norris' go-querystring
+> to convert a Go struct back into a querystring. These two libraries perform
+> essentially the inverse operations. And in our data store, of course, we still
+> get the parameters as a Go struct.
+>
+> In the open source Sourcegraph API client, you can see the exact same
+> parameter structs that our data store uses. It's impossible for them to become
+> out of sync because otherwise the Go compiler would complain.
+>
+> *DEMO*: Click Run, then go to http://localhost:7777/repos/search?Owner=Alice&Language=Go.
+
+* Other things we did
+
+- Instrumented `http.Handlers` and API client `http.Transport` to track timing info using [[appmon][https://github.com/sourcegraph/appmon]]
+- Pass along typed error values from the data store to the frontend
+- Define a common interface for response pagination
+- Consolidate caching logic in the API
+- Made test mocks of the interfaces
+
+> TODO(sqs): talk briefly about the first 4 bullet points, or if the run-through time is under 35 min, add more slides covering them
+>
+> So, to sum it up, by making an implicit interface in our system an explicit Go
+> interface, we were able to remove a lot of complexity. We also consolidated
+> our URL route definitions, which eliminates buggy manual URL generation.
+>
+> What else did we win?
+>
+> We now have a high-quality, comprehensive API client library whose consistency
+> with our API is guaranteed by the Go compiler.
+>
+> We have dramatically reduced the number of, and centralized, operations that
+> can be performed in our system. Learning and refactoring the codebase is much
+> easier.
+>
+> We have easily mockable interfaces for testing.
+
+* Part 2: a standalone CLI tool that builds and analyzes projects' code
+
+####################################################################################################
+# HANDLER SYSTEM
+####################################################################################################
+
+* Why code analysis?
+
+Just indexing the raw text of source files isn't good enough:
+
+- Search results should be definitions (funcs, etc.), not just files that contain the term.
+- Search results should be ranked by usage, quality, recency, etc., not term frequency.
+- Source files should be fully linked so every identifier lets you jump-to-definition.
+- Functions should show you usage examples of everywhere else they're called.
+
+> First, why is it necessary to analyze the code?
+>
+> Well, it turns out that just indexing the raw text of a source file, as other
+> code search engines do, isn't good enough for a lot of reasons.
+>
+> First, we want the search results you see to be the function or package you're
+> looking for, not just files that contain your query.
+>
+> We want to use information about each function--whether it's exported, who
+> calls it, is it popular, who wrote it, etc.--to show you the most relevant
+> search results first.
+>
+> And we want to let you see all usage examples for any function, even across
+> projects, and jump to definitions when you're browsing the source code.
+>
+> So a full-text index won't cut it.
+
+
+* What is code analysis?
+
+Sourcegraph analyzes code:
+
+- Every definition (func, type, etc.) and its type, package, visibility, etc.
+- Every identifier and the definition it refers to
+- Other info: dependencies, authorship, etc.
+
+Requires:
+
+- Parsing AST
+- Type checking/inference
+- Installing dependencies
+- Compilation
+
+> But what do we mean by "code analysis"?
+>
+> Sourcegraph needs to actually understand the code in the same way a compiler
+> does: it collects definitions and resolves every identifier in the source
+> code.
+>
+> Getting this information requires typechecking (for static languages like Go
+> and Java) or type inference (for dynamic languages like JavaScript, Python,
+> and Ruby).
+>
+> So, all this is much more involved than just indexing the full text of files,
+> but we think it's necessary for good code search and browsing.
+
+
+* Analysis output
+
+.code mypkg/myfile.go
+
+ ~/src/github.com/sqs/mypkg $ srcgraph make
+ {"Definitions": [
+    {"Name": "Greet", "Kind": "func",
+     "File": "myfile.go", "DefStart": 30, "DefEnd": 68,
+     "Exported": true, "Type": "func(salutation string)"},
+    ...
+  ],
+  "References": [
+    {"DefRepo": "code.google.com/p/go", "DefUnit": "fmt", "DefPath": "Println",
+     "File": "myfile.go", "Start": 49, "End": 56}, ...
+  ]
+ }
+
+> Here's what the analysis output actually looks like when you run the CLI tool
+> on a project. We have our code up top and the command down below. You just run
+> `srcgraph`make` from any code directory. That will auto-detect packages in a
+> repository, and then analyze code in those packages, in any of the 5 languages
+> we support.
+>
+> The output, as you see below, is a type-inferred, language-independent
+> representation of the code's structure: all of the definitions and references.
+>
+> You can go run this on your projects today, and if you have any open source
+> libraries, our worker servers have probably run this tool on your code.
+
+
+* Go helps make our CLI tool:
+
+- Easy to distribute
+- Easy to build from source
+- Composable
+- Extensible
+
+> This tool is, of course, written in Go. Language analyis shells out to code
+> written in other languages, but the glue of it is all in Go.
+>
+> And Go makes a ton of things easy.
+
+
+* Easy to distribute
+
+- ~25 MB static, cross-compiled binary
+- No system or library dependencies
+- Anyone can download it and run it immediately
+
+> The first nice thing Go gives us is that once compiled, this tool is a single
+> self-contained static binary with no system or library dependencies. It just
+> runs. That means anyone can download it and start using it immediately.
+>
+> By the way, if you're interested in learning more about how to distribute Go
+> static binaries, check out Alan Shreve's GopherCon talk.
+
+
+* Easy to compile
+
+ go install github.com/sourcegraph/srcgraph
+
+> And it's easy to compile: just run `go`install`. That compiles a hundred
+> thousand lines of code, from our codebase and 45 external packages, from
+> scratch in 5 seconds.
+>
+> People talk a lot about how it's so nice that Go produces static binaries and
+> compiles so fast, but I don't think the *ease* of compilation and lack of a
+> separate build system gets enough attention. There's only one way to build and
+> install virtually every Go library and program, and it requires zero
+> configuration.
+>
+> Who here has gotten frustrated by another language's build configuration, like
+> a pom.xml, setup.py, autoconf, Gemfile, etc.? (GIVE OUT GOPHER.) You can
+> squeeze this next time you have to do that. Because remember, those files
+> literally don't exist in Go.
+>
+> Now, if you have a large program (as opposed to a standalone library), you
+> probably need to pin the package versions you depend on. We use godep for
+> that, and it works great.
+
+* Easy to compose
+
+`srcgraph`make` produces a standard Makefile describing the analysis
+process.
+
+The Makefile's recipes in turn call other `srcgraph` subcommands:
+
+ ~/src/github.com/golang/groupcache$ srcgraph make -print-makefile
+
+ # Resolve dependencies of groupcache
+ .sourcegraph-data/groupcache@GoPackage_deps.json: *.go
+     srcgraph resolve-deps -json $^ > $@
+
+ # Dump definitions and references in groupcache
+ .sourcegraph-data/groupcache@GoPackage_graph.json: *.go
+     srcgraph graph -json $^ > $@
+
+ # Attribute each definition in groupcache to its authors
+ .sourcegraph-data/groupcache@GoPackage_authorship.json: .sourcegraph-data/groupcache@GoPackage_graph.json
+     srcgraph authorship -json $^ > $@
+
+#and then uses [[https://github.com/sourcegraph/makex][makex]] to execute the Makefile.
+
+> Another thing is that Go makes it easy to compose the programs you make.
+>
+> The `srcgraph`make` command is really simple: it produces a standard Makefile
+> and then executes it.
+>
+> And each recipe in the Makefile calls another subcommand of the `srcgraph`
+> tool.
+>
+> We try to adhere to the Unix philosophy of doing complex things by composing
+> simple commands. It makes it easy to understand what's going on and debug
+> problems. Go makes building this kind of program really easy in a couple of
+> ways:
+>
+> One, a Go program starts very quickly compared to the JVM or interpreted
+> languages. So there's not a big performance hit from executing multiple instances
+> of your program.
+>
+> Two, you don't need to worry about which JVM or interpreter, which source
+> files and JARs, and what GC or include-path flags to pass it to run a Go
+> program. You just execute the program.
+>
+> The design choices made by other languages lead you to make monolithic
+> programs. But here, we can see that the design choices that Go made lead you
+> to design your own programs in a better way. I'll point out some more examples
+> as I go, and I'd love to hear other examples from you all in the Q&A after.
+
+* So far, srcgraph make has:
+
+- detected packages in the repository
+- produced a Makefile with the analysis commands
+
+> At this point, srcgraph has produced a Makefile with a bunch of commands to
+> run that will perform the actual analysis and dump JSON.
+>
+> Let's see what happens when we actually perform language analysis on some code.
+
+
+* Language-specific analysis
+
+- Core codebase is language-independent
+- Language support is provided by implementations of Go interfaces:
+
+.code lang/types.go /START 2 OMIT/,/END 2 OMIT/
+
+> We designed the core codebase to be language independent and push all the
+> language-specific code into external packages. This is so our codebase isn't
+> littered with "if lang == Ruby" statements everywhere, and so that third
+> parties can add support for new languages to Sourcegraph.
+>
+> Adding support for a language just requires implementing these interfaces. The
+> interface is simplified for this talk, but you can look in our open source
+> code to see the full definition.
+
+* Example: simple JavaScript analyzer
+
+We want to analyze:
+
+.code javascript/sample.js
+
+First implement `lang.Analyzer`:
+
+ type Analyzer interface {
+     // Analyze a package to find all definitions (funcs, types, vars, etc.) and references
+     Analyze(pkg string) ([]*Def, []*Ref, error)
+ }
+
+
+> I want to demonstrate what it takes to build really basic JavaScript support.
+> We'll just focus on the Analyze method, since that's the one that does the
+> interesting type analysis work.
+
+* Example: simple JavaScript analyzer
+
+.code javascript/js_handler.go /START OMIT/,/END OMIT/
+.play javascript/jsdemo/jsdemo.go /START OMIT/,/END OMIT/
+
+(Real analyzers perform type checking and inference and are written in their
+target language.)
+
+> TODO(sqs): speaker notes
+
+* Now what?
+
+We've defined the analyzers, but how does the program know to call it to analyze `.js` files?
+
+Ideas:
+
+- Pass a list of available analyzers as an argument to every function ("context object")
+- Make every function a method on some type holding a list of analyzers
+- Register analyzers in a global list during initialization
+
+> So, now that we have this handler, how do we tell the analyzer to call it to
+> analyze `.js` files? Or any of the other languages we support?
+>
+> There are a few ways we could implement this.
+>
+> In other languages, it's common to pass so-called context objects around that
+> hold semi-global information like this. Or to turn previously top-level
+> functions into methods on some context type.
+>
+> Another option is to have a global variable containing a list of all available
+> analyzers.
+>
+> One thing I love about Go is that the stdlib is a really good source of design
+> advice for your own code.
+
+* "Where does the stdlib do something similar?"
+
+- `http.Handle("/foo",`myHandler)`
+- `sql.Register("postgresql",`pgdrv)`
+- `crypto.RegisterHash(h,`f)`
+- `signal.Notify(c,`syscall.SIGINT)`
+
+"Don't ad-lib; just crib from the standard lib"
+
+> So, I often try to look in the stdlib to see where they have done something similar.
+>
+> And it turns out there are several places in the stdlib that do something
+> similar, with a global Register func or something similar that is called
+> during initialization.
+
+* And in open source Go projects...
+
+[[https://github.com/dotcloud/docker/blob/51b188c5102e86ad453c933077bcaf9594070c28/engine/engine.go#L29][github.com/dotcloud/docker/engine/engine.go]]:
+
+ type Handler func(*Job) Status
+
+ var globalHandlers = make(map[string]Handler)
+
+ func Register(name string, handler Handler) error {
+   _, exists := globalHandlers[name]
+   if exists {
+     return fmt.Errorf("Can't overwrite global handler for command %s", name)
+   }
+   globalHandlers[name] = handler
+   return nil
+ }
+
+[[https://github.com/benmanns/goworker/blob/ed77c6c17b88c15c0850b24236cac846b9179c26/workers.go#L15][github.com/benmanns/goworker/workers.go]]
+[[https://github.com/russross/meddler/blob/308c3d0e5e45f543a2eb6c787cbfe0db3880e220/meddler.go#L35][github.com/russross/meddler/meddler.go]]
+[[https://github.com/rcrowley/go-metrics/blob/6ffbdf30ba7072d9f9e2afe57ad651a75a544a83/registry.go#L156][github.com/rcrowley/go-metrics/registry.go]]
+[[https://sourcegraph.com/search?q=golang+func+Register][List of Go funcs named Register]]
+
+> We also see similar global Register funcs used by a lot of popular open-source
+> Go libraries.
+
+* Solution: mimic sql.Register/http.Handle/crypto.RegisterHash
+
+A global variable + a `Register` function.
+
+.code lang/registry.go
+
+In the language-specific packages, register the handler:
+
+.code javascript/register.go
+
+Then import language-specific packages for side effects in your program (to call `init`).
+
+.play handler_main/handler_main.go /START OMIT/,/END OMIT/
+
+> So, our handler system has this tiny Register function that keeps a global
+> list of all language handlers. That's all there is to it.
+>
+> TODO(sqs): speaker notes
+
+
+* Taking simplicity for granted
+
+Remember that Register function that used a global var?
+
+In other languages, that simple solution would be frowned upon.
+
+- It uses static initializers, whose order and guarantees are often poorly defined.
+- It uses global variables, which can make code harder to reuse, refactor, and test.
+
+> In languages other than Go, using global variable and static initializer in
+> this way would probably be considered bad practice, for good reason.
+>
+> For example:
+>
+> Static initializers often don't guarantee they will run serially in the
+> sensible order and complete before the program starts. Will the things they
+> depend on be initialized by the time they're run? Will there be a race
+> condition?
+>
+> What if you need multiple separate registries for language handlers, maybe for
+> testing? A global variable prevents that.
+>
+> But Go made conscious design decisions so that this simple solution doesn't
+> cause the same problems as it does in other languages.
+
+* Go's design makes this simple solution OK
+
+In Go:
+
+- There are first-class global variables (not just singleton classes as in Java, etc.).
+- Static initialization occurs serially in the sensible order and completes before `main()`.
+- Each package's tests are run in a separate process, so they can safely modify global variables for testing.
+- The stdlib and many official commands use it, which makes its use acceptable to the community. (Other communities might shun you for this solution.)
+
+> TODO(sqs): speaker notes
+>
+> And again, this is a really nice way in which Go's design enables the simpler
+> solution.
+
+
+* Analysis complete!
+
+We upload the analysis output (language-independent JSON representing code's definitions) to our API.
+
+And the web app will display it.
+
+
+
+* Sourcegraph: A large-scale code search engine in Go
+
+- Q&A
+- Try it out: [[https://sourcegraph.com][sourcegraph.com]]
+- Slides will be on [[https://sourcegraph.com][sourcegraph.com/blog]] soon
+
+
+Feedback and follow-ups?
+
+Interested in using Sourcegraph to host docs & examples for your project?
+
+Or joining us to build Sourcegraph?
+
+Or t-shirts?
+
+- Contact me: Quinn Slack at [[sqs@sourcegraph.com]] or [[@sqs]]
+- [[@srcgraph]]
+
+
+
+
+# * Architecture
+# 
+# .image arch.svg 662 883
+# 
+# > Here's our architecture. There are 3 main parts: the web server, which serves
+# > an HTML frontend and a JSON API; the datastore, which hits PostgreSQL and our
+# > distributed filesystem for Git and Mercurial data; and the code analyzer and
+# > indexer, which runs as a background worker on our servers and you can also run
+# > locally and upload the result to us.
+# >
+# > Everything except for the PostgreSQL and the distributed filesystem is written
+# > in Go.
+# >
