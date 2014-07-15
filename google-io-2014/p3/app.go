@@ -191,7 +191,7 @@ type repoStore struct{ db *db }
 
 func (s *repoStore) Get(name string) (*Repo, error) {
 	var repo *Repo
-	return repo, s.db.Query(&repo, "SELECT * FROM repo WHERE name=$1", name)
+	return repo, s.db.Select(&repo, "SELECT * FROM repo WHERE name=$1", name)
 }
 
 // END STORE OMIT
@@ -205,7 +205,7 @@ func (s *repoStore) Search(opt *SearchOptions) ([]*Repo, error) {
 
 type db struct{}
 
-func (_ *db) Query(v interface{}, sql string, args ...interface{}) error {
+func (_ *db) Select(v interface{}, sql string, args ...interface{}) error {
 	if repo, ok := v.(**Repo); ok {
 		name, _ := args[0].(string)
 		*repo = &Repo{filepath.Base(name), "git://" + name + ".git"}
