@@ -1,0 +1,294 @@
+Building a testable Go web app at Sourcegraph
+Tech Talk at Pivotal Labs
+22 Jul 2014
+Tags: pivotal-labs, go, sourcegraph
+
+Quinn Slack
+Sourcegraph
+[[https://sourcegraph.com]]
+@sqs
+@srcgraph
+
+
+####################################################################################################
+# OVERVIEW
+####################################################################################################
+
+* Overview
+
+- What is Sourcegraph?
+- How we made our large web app testable
+
+# Video at TODO
+
+# Blog post at TODO
+
+* Sourcegraph: a code search engine written in Go
+
+- Analyzes & indexes open-source code on GitHub, Google Code, etc.
+- Shows all usage examples of any function/etc., across the open-source world
+- Searches by function, type, package, etc. (not just full-text search)
+- Supports Go, Python, JavaScript, Ruby, and (soon) Java
+
+Free and (mostly) open source: [[https://sourcegraph.com][sourcegraph.com]]
+
+* Demo
+
+.image sourcegraph-search-screenshot.png 262 841
+.image sourcegraph-code-screenshot.png 305 966
+
+
+* 
+
+.image webappstruct.svg 610 1050
+
+* tests v0
+
+- Populate DB with fixtures
+- Call `http.Get` on API endpoints
+- Parse HTTP response body
+- Check against expected
+
+* Tests v0
+
+ func TestListRepositories(t *testing.T) {
+   tests := []struct { url string; insert []interface{}; want []*Repo }{
+     {"/repos", []*Repo{{Name: "foo"}}, []*Repo{{Name: "foo"}}},
+     {"/repos?lang=Go", []*Repo{{Lang: "Python"}}, nil},
+     {"/repos?lang=Go", []*Repo{{Lang: "Go"}}, []*Repo{{Lang: "Go"}}},
+   }
+   db.Connect()
+   s := http.NewServeMux()
+   s.Handle("/", router)
+   for _, test := range tests {
+     func() {
+       req, _ := http.NewRequest("GET", test.url, nil)
+       tx, _ := db.DB.DbMap.Begin()
+       defer tx.Rollback()
+       tx.Insert(test.data...)
+       rw := httptest.NewRecorder()
+       rw.Body = new(bytes.Buffer)
+       s.ServeHTTP(rw, req)
+       var got []*Repo
+       json.NewDecoder(rw.Body).Decode(&got)
+       if !reflect.DeepEqual(got, want) { t.Errorf("%s: got %v, want %v", test.url, got, test.want) }
+     }()
+   }
+ }
+
+* Problems with tests v0
+
+- *Slow*: required DB insertion and querying for each test case
+- *Hard*to*refactor*: routes and parameters specified as strings
+- *Messy*boilerplate*: easy to introduce flaws in setup code
+
+But they sufficed for a while...
+
+* Requirements and code changed around the tests...
+
+- We need an API client
+- We added more features and tests (so tests took longer to run)
+- We have more complex URL routes (and 75 of them)
+- We need to access the datastore directly (not just via the HTTP API)
+- We want external API consumers to be able to mock our HTTP API
+
+* Now our tests are:
+
+- Comprehensive (all 3 layers are tested)
+- Non-repetitive (even though the 3 layers' APIs are similar)
+- Quick to execute (no DB interaction)
+- Isolated and parallelizable
+- Targeted to a specific component (for unit tests)
+- Supportive of external API consumers who want to test their own libs
+
+*How*did*we*achieve*these?*
+
+* How we improved our web app tests
+
+- Built a Go HTTP API client
+- Unified the 2 sets of Go interfaces exposed by our HTTP API client and datastore
+- Centralized route definitions
+- Created mocks of these unified interfaces
+
+* 1. Built a Go HTTP API client
+
+*Previous:* 1 API consumer, our AngularJS web frontend.
+
+*Current:* multiple API consumers, including our (now-)Go web frontend.
+
+API client: [[https://github.com/sourcegraph/go-sourcegraph][go-sourcegraph]] (modeled on [[https://github.com/google/go-github][go-github]])
+
+ func NewClient() *Client {
+   c := &Client{BaseURL:DefaultBaseURL}
+   c.Repositories = &repoService{c}
+   return c
+ }
+
+ type repoService struct{ c *Client }
+ 
+ func (c *repoService) Get(name string) (*Repo, error) {
+     resp, err := http.Get(fmt.Sprintf("%s/api/repos/%s", c.BaseURL, name))
+     if err != nil {
+         return nil, err
+     }
+     defer resp.Body.Close()
+     var repo Repo
+     return &repo, json.NewDecoder(resp.Body).Decode(&repo)
+ }
+
+* Now that we have an API client...
+
+- *Quick*win:* Use it to issue HTTP requests and parse responses in our tests, instead of issuing them manually.
+- *More*involved*win:* Unify the interfaces the API client exposes (e.g., `repoService`) with those the datastore exposes.
+
+* Step 2. Unify the interfaces of our HTTP API client & datastore
+
+*Previous:* Our API `http.Handlers` issued SQL queries directly. (Yuck!)
+
+*Current:* Our API `http.Handlers` call our datastore, which implements the same interface as our HTTP API client.
+
+Remember that `(*repoService).Get` method from the HTTP API client that issues an HTTP request?
+
+Now we also have `(*repoStore).Get`:
+
+ func NewDatastore(dbh modl.SqlExecutor) *Datastore {
+   s := &Datastore{dbh: dbh}
+   s.Repositories = &repoStore{s}
+   return s
+ }
+
+ type repoStore struct{ *Datastore }
+
+ func (s *repoStore) Get(name string) (*Repo, error) {
+     var repo *Repo
+     return repo, s.db.Select(&repo, "SELECT * FROM repo WHERE name=$1", name)
+ }
+
+* Now that the HTTP API client implements the same interface as the datastore...
+
+- *Quick*win:* Our code and its behavior is simpler and easier to learn.
+- *Quick*win:* Our API client and datastore now use the same data types and parameter struct types.
+- *More*involved*win:* We can make standard mock types for these interfaces.
+
+* Step 3. Centralizing route definitions
+
+But first...
+
+Remember how we generated the URL to our API endpoint in our API client?
+
+ resp, err := http.Get(fmt.Sprintf("%s/api/repos/%s", c.BaseURL, name))
+
+This was very error prone because we have 75 routes (with complex definitions).
+
+* Unifying URL routing and generation
+
+Separate the route definition from the mounting of handlers:
+
+ const RepoGetRoute = "repo"
+ 
+ func NewAPIRouter() *mux.Router {
+     m := mux.NewRouter()
+     // define the routes
+     m.Path("/api/repos/{Name:.*}").Name(RepoGetRoute)
+     return m
+ }
+ 
+ func init() {
+     m := NewAPIRouter()
+     // mount handlers
+     m.Get(RepoGetRoute).HandlerFunc(handleRepoGet)
+     http.Handle("/api/", m)
+ }
+
+* Now our API client is much less error prone
+
+We use the same routes to generate *and* route URLs.
+
+The `(*repoService).Get` method is now:
+
+ var apiRouter = NewAPIRouter()
+
+ func (s *repoService) Get(name string) (*Repo, error) {
+     url, _ := apiRouter.Get(RepoGetRoute).URL("name", name)
+     resp, err := http.Get(s.baseURL + url.String())
+     if err != nil {
+         return nil, err
+     }
+     defer resp.Body.Close()
+ 
+     var repo []Repo
+     return repo, json.NewDecoder(resp.Body).Decode(&repo)
+ }
+
+* Step 4. Creating mocks of the unified interfaces
+
+*Previous:* Our API tests tested the router, HTTP handlers, SQL generation, and DB querying.
+
+*Current:* We have separate tests for each. And our entire test suite runs in ~1sec. (Yay!)
+
+ type MockRepoService struct {
+     Get_ func(name string) (*Repo, error)
+ }
+ 
+ var _ RepoInterface = MockRepoService{}
+ 
+ func (s MockRepoService) Get(name string) (*Repo, error) {
+     if s.Get_ == nil {
+         return nil, nil
+     }
+     return s.Get_(name)
+ }
+
+ func NewMockClient() *Client { return &Client{&MockRepoService{}} }
+
+* Now that we have mocks...
+
+We can use them in our tests (*for*all*3*layers!*).
+
+Here we mock the datastore's `RepoService` and use our HTTP API client to test the API `http.Handler`. (We're using all the stuff we just talked about!)
+
+ func TestRepoGet(t *testing.T) {
+    setup()
+    defer teardown()
+
+    var fetchedRepo bool
+    mockDatastore.Repo.(*MockRepoService).Get_ = func(name string) (*Repo, error) {
+        if name != "foo" {
+            t.Errorf("want Get %q, got %q", "foo", repo.URI)
+        }
+        fetchedRepo = true
+        return &Repo{name}, nil
+    }
+
+    repo, err := mockAPIClient.Repositories.Get("foo")
+    if err != nil { t.Fatal(err) }
+
+    if !fetchedRepo { t.Errorf("!fetchedRepo") }
+ }
+
+
+* Now that we have all this...
+
+We've achieved our goals:
+
+- Comprehensive (all 3 layers are tested)
+- Non-repetitive (even though the 3 layers' APIs are similar)
+- Quick to execute (no DB interaction)
+- Isolated and parallelizable
+- Targeted to a specific component (for unit tests)
+- Supportive of external API consumers who want to test their own libs (they can reuse NewMockClient)
+
+
+
+* Sourcegraph: A large-scale code search engine in Go
+
+- Check out our actual API client code at [[https://sourcegraph.com/github.com/sourcegraph/go-sourcegraph][go-sourcegraph]]
+- Email me ([[sqs@sourcegraph.com]]) if you want to see more code snippets from our private code
+- Try our Sourcegraph: [[https://sourcegraph.com][sourcegraph.com]]
+- Slides will be on [[https://sourcegraph.com][sourcegraph.com/blog]] soon
+
+Feedback and follow-ups
+
+- Contact me: Quinn Slack at [[sqs@sourcegraph.com]] or [[@sqs]]
+- [[@srcgraph]]
+
