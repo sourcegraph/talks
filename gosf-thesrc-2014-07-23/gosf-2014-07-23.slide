@@ -26,56 +26,13 @@ Sourcegraph
 
 
 
-* Overview
-- Web apps in general
-- The web app we're gonna build
-- Our approach to building a complex, maintainable web app in Go (with examples!)
+# * Overview
+# - Web apps in general
+# - The web app we're gonna build
+# - Our approach to building a complex, maintainable web app in Go (with examples!)
 
 
 
-* Web applications
-.image webappstruct.svg 610 1050
-
-* Things you want in your web app
-- Functional (e.g., CRUD)
-- Performant
-- Readable
-- Maintainable
-- D.R.Y.
-- Well-tested
-- API
-
-
-* Web frameworks
-
-Pros
-
-- Streamline common functionality
-- Don't reinvent the wheel
-- Strong conventions around code style and testing
-- Well-tested
-
-Cons
-
-- Another conceptual layer of abstraction
-- Hard to do things off the beaten path
-- Rise of "microframeworks"
-
-
-
-* Observation: Go standard lib and community has great support for webapp-y things
-
-Stdlib
-
-- `net/http`
-- `net/url`
-- `database/sql`
-
-Third-party libs
-
-- `gorilla/mux`
-- `gorilla/schema`
-- `jmoiron/modl`
 
 * How we built Sourcegraph.com
 
@@ -88,25 +45,50 @@ Third-party libs
 
 * thesrc.org
 
-Motivation
+# Motivation
 
 - Our personal dream: community site where people can share and discuss programming projects
 - *NOT*: "How I hacked my latest funding round", "How the NSA is reading your email", or Silicon Valley gossip
 
-- Want to test how general our web app patterns are
-- Want to dogfood Sourcegraph
+*Our*contribution*to*the*conversation*about*how*to*build*web*apps*in*Go*
 
+- [[http://thesrc.org]]
+- [[https://github.com/sourcegraph/thesrc]]
 
-What it does
-
-- Pulls from r/programming, HN, only displays posts with code
-- Submit your own posts directly
-- Live now at [[http://thesrc.org]]
 
 
 * thesrc.org
 
 .image assets/thesrc_screen.png
+
+# What it does
+# - Pulls from r/programming, HN, only displays posts with code
+# - Submit your own posts directly
+# - Live now at [[http://thesrc.org]]
+
+
+
+
+* What thesrc.org does in a Go interface
+
+.code assets/snippets.go /START POSTS_INTERFACE/,/END POSTS_INTERFACE/
+
+# This is all that it does. This is platonic form. Remember this slide.
+
+
+* (Aside: What makes a good web app?)
+- Functional (e.g., CRUD)
+- Performant
+
+D.R.Y.
+
+- Readable
+- Maintainable
+- Well-tested
+- API
+
+
+
 
 * Architecture
 .image webappstruct.svg 610 1050
@@ -115,10 +97,16 @@ What it does
 
 
 
+
+
+
+
+
+
 * Our "framework"
 - Templating: `html/template`
 
- func executeTemplate(req *http.Request, resp http.ResponseWriter, tmplName string,
+ func renderTemplate(req *http.Request, resp http.ResponseWriter, tmplName string,
                       status int, header http.Header, tmplData interface{}) error { ... }
 
 
@@ -139,14 +127,18 @@ Uses global vars instead of per-request context for DB, config, etc.
 
 
 
+* Eliminate repetition
+.image webappstruct.svg 610 1050
 
 
 
 * Unify API client and data store interfaces
 
-Our web app (thesrc.org) functionality in a Go interface:
-
 .code assets/snippets.go /START POSTS_INTERFACE/,/END POSTS_INTERFACE/
+
+
+
+
 
 
 API Client and Datastore are just different implementations *of*the*same*interface*
@@ -161,11 +153,26 @@ API Client and Datastore are just different implementations *of*the*same*interfa
 .code assets/snippets.go /START DATASTORE/,/END DATASTORE/
 
 
+
+
+
+* 
+.image webappstruct.svg 610 1050
+
+
+
+
+
 * Simplify HTTP handlers
 
 .code assets/snippets.go /START APP_HTTP_HANDLER/,/END APP_HTTP_HANDLER/
 
 .code assets/snippets.go /START API_HTTP_HANDLER/,/END API_HTTP_HANDLER/
+
+
+* 
+.image webappstruct.svg 610 1050
+
 
 
 * Unify URL routes and route generation
@@ -202,12 +209,10 @@ You can also apply this to the frontend router if it's similar enough to the API
 - Unit tests are targeted and run super fast
 
 
-* Summary
-- No framework, instead used stdlib and a few small libraries + defined helper functions like `executeTemplate` and `writeJSON`
-- Unified API client and datastore under one common interface
-- Unified URL routing and route generation
-- Share parameters across layers
-- Share mocks across layers
+
+
+* 
+.image webappstruct.svg 610 1050
 
 
 
@@ -228,13 +233,17 @@ Check it out at [[https://github.com/sourcegraph/thesrc]]
 
 
 * Things you want in your web app
+
 - Functional (e.g., CRUD): see [[http://thesrc.org]]
 - Performant: Go stdlib is performant, and we have very thin layer on top of that
-- Readable: no framework, simple abstractions
-- Maintainable: no framework, simple abstractions
-- D.R.Y.: unified URL routing and route generation, unified API client and data store interface, parameter structs shared
-- Well-tested: D.R.Y., interfaces easy to mock
-- API: High-quality API client as a side effect
+
+D.R.Y.
+
+- unified URL routing and route generation
+- unified API client and data store interface
+- parameter structs shared
+- interfaces easy to mock
+- high-quality API client as a side effect of unifying interfaces
 
 
 

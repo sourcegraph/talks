@@ -14,7 +14,9 @@ import (
 // START POSTS_INTERFACE OMIT
 type PostsService interface {
 	Get(id int) (*Post, error)
+
 	List(opt *PostListOptions) ([]*Post, error)
+
 	Submit(post *Post) (created bool, err error)
 }
 
