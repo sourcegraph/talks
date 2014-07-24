@@ -1,0 +1,249 @@
+Patterns and examples for building a Go web app
+GoSF
+15:10 23 Jul 2014
+Tags: gosf, go, sourcegraph
+
+Beyang Liu
+Sourcegraph
+[[https://sourcegraph.com]]
+@beyang
+@srcgraph
+
+
+* Sourcegraph: a complex Go web app
+.image sourcegraph-search-screenshot.png 262 841
+
+- Live at [[https://sourcegraph.com]]
+- Searches by function, type, package, etc. (not just full-text search)
+- Supports Go, Python, JavaScript, Ruby, and (soon) Java
+
+* 
+
+.image sourcegraph-code-screenshot.png 305 966
+
+- Shows all usage examples of any function/etc., across the open-source world
+- Free and (mostly) open source
+
+
+
+* Overview
+- Web apps in general
+- The web app we're gonna build
+- Our approach to building a complex, maintainable web app in Go (with examples!)
+
+
+
+* Web applications
+.image webappstruct.svg 610 1050
+
+* Things you want in your web app
+- Functional (e.g., CRUD)
+- Performant
+- Readable
+- Maintainable
+- D.R.Y.
+- Well-tested
+- API
+
+
+* Web frameworks
+
+Pros
+
+- Streamline common functionality
+- Don't reinvent the wheel
+- Strong conventions around code style and testing
+- Well-tested
+
+Cons
+
+- Another conceptual layer of abstraction
+- Hard to do things off the beaten path
+- Rise of "microframeworks"
+
+
+
+* Observation: Go standard lib and community has great support for webapp-y things
+
+Stdlib
+
+- `net/http`
+- `net/url`
+- `database/sql`
+
+Third-party libs
+
+- `gorilla/mux`
+- `gorilla/schema`
+- `jmoiron/modl`
+
+* How we built Sourcegraph.com
+
+* Not talking about how we built Sourcegraph.com
+- Google I/O talk: [[http://sourcegraph.com/blog/google-io-2014-building-sourcegraph-a-large-scale-code-search-engine-in-go]]
+- Related talk about testing: [[http://go-talks.appspot.com/github.com/sourcegraph/talks/pivotal-2014-07-22/pivotal.slide]]
+
+
+* How we built a cool web app in Go in under 24 hours
+
+* thesrc.org
+
+Motivation
+
+- Our personal dream: community site where people can share and discuss programming projects
+- *NOT*: "How I hacked my latest funding round", "How the NSA is reading your email", or Silicon Valley gossip
+
+- Want to test how general our web app patterns are
+- Want to dogfood Sourcegraph
+
+
+What it does
+
+- Pulls from r/programming, HN, only displays posts with code
+- Submit your own posts directly
+- Live now at [[http://thesrc.org]]
+
+
+* thesrc.org
+
+.image assets/thesrc_screen.png
+
+* Architecture
+.image webappstruct.svg 610 1050
+
+
+
+
+
+* Our "framework"
+- Templating: `html/template`
+
+ func executeTemplate(req *http.Request, resp http.ResponseWriter, tmplName string,
+                      status int, header http.Header, tmplData interface{}) error { ... }
+
+
+
+- URL routing/manipulation: `gorilla/mux`, etc.
+- Handlers: define handlers with an error return:
+
+ func servePost(w http.ResponseWriter, r *http.Request) error { ... }
+
+\...and use a wrapper function to check auth, etc.
+
+- JSON: `encoding/json`
+
+ func writeJSON(w http.ResponseWriter, v interface{}) error { ... }
+
+- SQL: `database/sql`, `jmoiron/modl`
+Uses global vars instead of per-request context for DB, config, etc.
+
+
+
+
+
+
+* Unify API client and data store interfaces
+
+Our web app (thesrc.org) functionality in a Go interface:
+
+.code assets/snippets.go /START POSTS_INTERFACE/,/END POSTS_INTERFACE/
+
+
+API Client and Datastore are just different implementations *of*the*same*interface*
+
+* API Client implementation
+
+.code assets/snippets.go /START APICLIENT/,/END APICLIENT/
+
+
+* Datastore implementation
+
+.code assets/snippets.go /START DATASTORE/,/END DATASTORE/
+
+
+* Simplify HTTP handlers
+
+.code assets/snippets.go /START APP_HTTP_HANDLER/,/END APP_HTTP_HANDLER/
+
+.code assets/snippets.go /START API_HTTP_HANDLER/,/END API_HTTP_HANDLER/
+
+
+* Unify URL routes and route generation
+
+.code assets/snippets.go /START ROUTES/,/END ROUTES/
+
+.code assets/snippets.go /START API_ROUTER/,/END API_ROUTER/
+
+You can also apply this to the frontend router if it's similar enough to the API router
+
+* Now you can generate URLs using the router
+
+.code assets/snippets.go /START API_CLIENT_ROUTE_GEN/,/END API_CLIENT_ROUTE_GEN/
+
+
+* Share parameter structs across the layers
+
+.code assets/snippets.go /START PARAM_STRUCT/,/END PARAM_STRUCT/
+
+.code assets/snippets.go /START PARAM_STRUCT_DECODE/,/END PARAM_STRUCT_DECODE/
+
+.code assets/snippets.go /START PARAM_STRUCT_ENCODE/,/END PARAM_STRUCT_ENCODE/
+
+
+
+
+
+
+* Mocking our interface for tests
+
+.code assets/snippets.go /START POSTS_MOCK/,/END POSTS_MOCK/
+
+- Mocks can be used in all 3 layers
+- Unit tests are targeted and run super fast
+
+
+* Summary
+- No framework, instead used stdlib and a few small libraries + defined helper functions like `executeTemplate` and `writeJSON`
+- Unified API client and datastore under one common interface
+- Unified URL routing and route generation
+- Share parameters across layers
+- Share mocks across layers
+
+
+
+
+
+* Directory structure
+
+Check it out at [[https://github.com/sourcegraph/thesrc]]
+
+      client.go      // defines interface, API client implementation
+      datastore/     // datastore implementation of interface
+      app/           // frontend router
+      api/           // API router
+      router/        // defines URL routes (for both api/ and app/ but can split this up)
+      cmd/
+
+      // other app-specific code
+
+
+* Things you want in your web app
+- Functional (e.g., CRUD): see [[http://thesrc.org]]
+- Performant: Go stdlib is performant, and we have very thin layer on top of that
+- Readable: no framework, simple abstractions
+- Maintainable: no framework, simple abstractions
+- D.R.Y.: unified URL routing and route generation, unified API client and data store interface, parameter structs shared
+- Well-tested: D.R.Y., interfaces easy to mock
+- API: High-quality API client as a side effect
+
+
+
+* Meta points
+- Reading stdlib and popular third-party libs is a good way to pick up solid patterns
+- [[https://sourcegraph.com][Sourcegraph]] is good for this :)
+
+- This approach has worked for us so far. We'd love feedback about how to do it better.
+- Let us know what you think of [[http://thesrc.org]]!
+
+
+# - Slides available here
