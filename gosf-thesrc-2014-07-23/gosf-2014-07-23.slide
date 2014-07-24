@@ -10,7 +10,7 @@ Sourcegraph
 @srcgraph
 
 
-* Sourcegraph: a complex Go web app
+* Sourcegraph: a code search engine in Go
 .image sourcegraph-search-screenshot.png 262 841
 
 - Live at [[https://sourcegraph.com]]
@@ -79,18 +79,20 @@ Sourcegraph
 * (Aside: What makes a good web app?)
 - Functional (e.g., CRUD)
 - Performant
+- API
 
-D.R.Y.
+D.R.Y. code
 
 - Readable
 - Maintainable
 - Well-tested
-- API
 
 
 
 
-* Architecture
+
+
+* Architecture of many web apps
 .image webappstruct.svg 610 1050
 
 
@@ -232,7 +234,7 @@ Check it out at [[https://github.com/sourcegraph/thesrc]]
       // other app-specific code
 
 
-* Things you want in your web app
+* Did our app achieve our goals?
 
 - Functional (e.g., CRUD): see [[http://thesrc.org]]
 - Performant: Go stdlib is performant, and we have very thin layer on top of that
@@ -248,11 +250,10 @@ D.R.Y.
 
 
 * Meta points
+- Slides available here: [[http://go-talks.appspot.com/github.com/sourcegraph/talks/gosf-thesrc-2014-07-23/gosf-2014-07-23.slide]]
+
 - Reading stdlib and popular third-party libs is a good way to pick up solid patterns
 - [[https://sourcegraph.com][Sourcegraph]] is good for this :)
 
 - This approach has worked for us so far. We'd love feedback about how to do it better.
 - Let us know what you think of [[http://thesrc.org]]!
-
-
-# - Slides available here
