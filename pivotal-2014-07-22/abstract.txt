@@ -1,0 +1,11 @@
+Unit tests are essential to maintaining code quality, especially as the complexity of an application increases.
+Sourcegraph is a large-scale code search engine (live at sourcegraph.com) that indexes millions of projects across 5
+different languages. Its web app component is written in the Go programming language. The Go standard library has a
+terrific package for writing unit tests, but the language is still fairly young and the best-practices conventions
+around structuring tests for different types of applications are still evolving and developing.
+
+Quinn Slack discusses some patterns that Sourcegraph uses to implement fast, D.R.Y., and comprehensive unit test
+coverage. He'll walk through how Sourcegraph initially structured its tests and the improvements they made as their web
+app scaled and became more complex. He'll show specific code snippets and hopes that these usage patterns will be useful
+to others building programs in Go. Slides are available at:
+http://go-talks.appspot.com/github.com/sourcegraph/talks/pivotal-2014-07-22/pivotal.slide.
