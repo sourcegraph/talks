@@ -1,0 +1,95 @@
+srclib: design of an extensible language analysis framework
+Tech Talk at Sourcegraph HQ
+10 Sep 2014
+Tags: sourcegraph, srclib, editor-plugins
+
+Beyang Liu
+Sourcegraph
+[[https://sourcegraph.com]]
+@beyang
+@srcgraph
+
+
+* Follow along
+- [[https://srclib.org/#install]]
+- git clone https://sourcegraph.com/sourcegraph/srclib
+- git clone https://sourcegraph.com/sourcegraph/srclib-python
+
+* Goals
+- solve M x N editor-language problem
+.image assets/mxn_problem.png
+- API that people can build on top of (editor plugins, etc.)
+- extensibility (new languages)
+
+* Solution
+.image assets/srclib_diagram.png
+
+* srclib output
+srclib is like a compiler, but instead of emitting machine code, it emits JSON.
+
+Try it:
+
+  $ src do-all && ls .srclib-cache/
+
+
+* Source unit
+.code assets/snippets.go /START UNIT_STRUCT/,/END UNIT_STRUCT/
+
+* Definition
+.code assets/snippets.go /START DEF_STRUCT/,/END DEF_STRUCT/
+
+* Reference
+.code assets/snippets.go /START REF_STRUCT/,/END REF_STRUCT/
+
+* Architecture
+- srclib is a set of loosely coupled language analysis toolchains
+(srclib-go, srclib-python, srclib-javascript, srclib-ruby, srclib-java, etc.)
+
+- srclib core is very small (just handles task coordination & VCS blame), srclib toolchains handle everything else
+- srclib core talks to language toolchains via stdin/stdout
+
+* Language toolchain
+Each toolchain is responsible for
+
+- scan: detects source units and their dependencies
+- depresolve: resolves dependencies to VCS repositories
+- graph: output all references and definitions
+
+Adding a new language just means writing a program that supports these 3 operations.
+
+
+* srclib is built with popular open-source libs
+
+- go, pip, gem, npm, maven for dependency fetching
+- go.tools, Jedi, YARD, tern.js, JDK for analysis
+
+Toolchain authors *use*languages/libraries*of*their*choice*.
+
+* API
+- Simple command-line API, outputs JSON
+  $ src api describe
+
+- Currently consumed by editor plugins
+- Varun will talk more about this
+
+* Contributing
+Download a plugin or use Sourcegraph.com and file bugs [[https://github.com/sourcegraph/srclib/issues]]
+
+- thanks to Adam Singer, Kevin Wang, Zach Latta, Dmitri Shuralyov, and more
+
+Develop a new language toolchain
+
+- [[https://sourcegraph.com/github.com/financeCoding/srclib-dart]]
+- [[https://sourcegraph.com/github.com/jakub-/srclib-rust]]
+
+Build a new editor plugin or improve an existing one
+
+- Existing: Sublime, Atom, Emacs
+- Wanted: Vim
+
+
+* Check out srclib
+
+Tweet it: [[https://twitter.com/srclib][@srclib]]
+Install it: [[https://srclib.org#install]]
+Hack on it: [[https://sourcegraph.com/sourcegraph/srclib]]
