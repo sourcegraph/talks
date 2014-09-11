@@ -22,6 +22,8 @@ Sourcegraph
 - extensibility (new languages)
 
 * Solution
+M x N => M + N
+
 .image assets/srclib_diagram.png
 
 * srclib output
@@ -65,11 +67,11 @@ Adding a new language just means writing a program that supports these 3 operati
 
 Toolchain authors *use*languages/libraries*of*their*choice*.
 
-* API
+* Command-line API
 - Simple command-line API, outputs JSON
   $ src api describe
 
-- Currently consumed by editor plugins
+- Consumed by all the srclib editor plugins
 - Varun will talk more about this
 
 * Contributing
