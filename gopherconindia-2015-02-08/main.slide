@@ -1,0 +1,341 @@
+Practical Metaprogramming in Go
+GopherConIndia
+20 Feb 2015
+Tags: gopherconindia, go, sourcegraph, metaprogramming
+
+Beyang Liu
+Sourcegraph
+[[https://sourcegraph.com]]
+@beyang
+@srcgraph
+
+* What is metaprogramming?
+
+Programs that generate, modify, or analyze other programs.
+
+Examples:
+
+- gofmt, govet
+- C++ templates
+- macros
+- compilers and transpilers
+- JS minification
+- linters, static analysis tools
+- reflection
+- method_missing, monkey patching (dynamic metaprogramming)
+
+* How can you use metaprogramming in practice?
+
+Scenario: we're writing a web app in Go. We want it to be
+
+- well tested
+- secure
+- easy to deploy/distribute
+
+
+* Application 1: tests
+
+To have good tests, we need mocks.
+
+Mock pattern in Go:
+
+  type Service interface {
+       GetRepo(r RepoSpec) (*Repo, error)
+  }
+
+  type ServiceImpl struct { ... }
+
+  func (s *ServiceImpl) GetRepo(r RepoSpec) (*Repo, error) { ... }
+
+  type MockService struct {
+       GetRepo_ func(r RepoSpec) (*Repo, error)
+  }
+
+  func (s *MockService) GetRepo(r RepoSpec) (*Repo, error) {
+       return s.GetRepo_(r)
+  }
+
+* So you added a bunch of features...
+
+  type Service interface {
+
+       GetRepo(r RepoSpec) (*Repo, error)
+
+       ListRepos(opt ListRepoOpts) ([]*Repo, error)
+
+       CreateRepo(r *Repo) (*Repo, error)
+
+       GetDef(d DefSpec) (*Def, error)
+
+       ListDefs(opt ListDefsOpts) ([]*Def, error)
+
+       GetRef(r RefSpec) (*Ref, error)
+
+       ListRefs(opt ListRefsOpts) ([]*Ref, error)
+
+       // etc.
+  }
+
+* Now you need to write a bunch of boilerplate for the mock :(
+
+  type MockService struct {
+       GetRepo_ func (r RepoSpec) (*Repo, error)
+       ListRepos_ func(opt ListRepoOpts) ([]*Repo, error)
+       CreateRepo_ func(r *Repo) (*Repo, error)
+       GetDef_ func(d DefSpec) (*Def, error)
+       ListDefs_ func(opt ListDefsOpts) ([]*Def, error)
+       GetRef_ func(r RefSpec) (*Ref, error)
+       ListRefs_ func(opt ListRefsOpts) ([]*Ref, error)
+  }
+  func (s MockService) GetRepo func (r RepoSpec) (*Repo, error) {
+       return s.GetRepo_(r)
+  }
+  func (s MockService) ListRepos func(opt ListRepoOpts) ([]*Repo, error) {
+       return s.ListRepos_(opt)
+  }
+  func (s MockService) CreateRepo func(r *Repo) (*Repo, error) {
+       return s.CreateRepo_(r)
+  }
+  func (s MockService) GetDef func(d DefSpec) (*Def, error) {
+       return s.GetDef_(d)
+  }
+  func (s MockService) ListDefs func(opt ListDefsOpts) ([]*Def, error) {
+       return s.ListDefs_(opt)
+  }
+  func (s MockService) GetRef func(r RefSpec) (*Ref, error) {
+       return s.GetRef_(r)
+  }
+  func (s MockService) ListRefs func(opt ListRefsOpts) ([]*Ref, error) {
+       return s.ListRefs_(opt)
+  }
+
+
+
+
+* gen-mocks
+
+  $ go get sourcegraph.com/sourcegraph/gen-mocks
+  $ gen-mocks -n="<package-name>" -o="<output-directory>" -p="<package-path>"
+
+Parses the AST of a source interface in file.go and outputs code for the mock implementation in file_mock.go.
+
+We use it to generate mocks for our [[https://sourcegraph.com/sourcegraph/go-sourcegraph][public API client]] and
+internal services.
+
+
+
+* Other code generation tools
+
+Taken from [[https://github.com/golang/go/wiki/GoGenerateTools]]:
+
+- [[https://golang.org/cmd/yacc/][go tool yacc]]
+- [[https://godoc.org/golang.org/x/tools/cmd/stringer][stringer]]
+- [[https://github.com/campoy/jsonenums][jsonenums]]
+
+Use in conjunction with *go*generate*.
+
+
+
+
+
+
+
+* Application 2: Security
+
+Want a strong guarantee on correctness of critical code.
+
+E.g., ensure every public method of a service calls a permissions checking function
+
+  func (s *ServiceImpl) GetRepo(r RepoSpec) (*Repo, error) {
+       if !hasPermission(s.UserID, r) {
+          return nil, errors.New("permission denied)
+       }
+
+       ...
+  }
+
+including functions that are added later.
+
+  + func (s *ServiceImpl) DeleteRepo(r RepoSpec) error {
+  +      ...
+  + }
+
+This is easy to overlook during code review.
+
+
+* go-astquery
+
+Small library that provides convenience functions for querying the AST.
+
+You can verify that every method on a struct (MyService) calls a function (hasPermission):
+
+  import "github.com/beyang/go-astquery"
+
+  func main() {
+       bpkg, _ := build.Import("sourcegraph.com/sourcegraph/sourcegraph/service")
+       pkgs, _ := parser.ParseDir(token.NewFileSet(), bpkg.Dir, nil, parser.AllErrors)
+       pkg := pkgs["service"]
+       service := astquery.Find([]ast.Node{pkg},
+         astquery.SetFilter{Names: []string{"MyService"}, Type: ((*ast.TypeSpec)(nil))})[0]
+       methods := astquery.Find([]ast.Node{pkg},
+         astquery.MethodFilter{ReceiverType: astquery.GetName(service)})
+       for _, method := range methods {
+           calls := astquery.Find([]ast.Node{method}, SetFilter{Names: []string{"hasPermission"}, type: ((*ast.TypeSpec)(nil))})
+           if len(calls) == 0 {
+              os.Exit(1)
+           }
+       }
+  }
+
+* go-astquery
+
+  $ go get sourcegraph.com/sourcegraph/go-astquery/...
+
+- go-astquery is simple (doesn't resolve references, types, etc.).
+- go-astquery is super fast.
+- great for anywhere you want a basic correctness guarantee.
+- Go oracle is much more powerful, but is slower.
+
+* go list
+
+Make sure all contact with the DB is mediated through the service package (no direct access to DB).
+
+Sufficient condition: no imports from package app to package db.
+
+  $ go list -f {{.Imports}} sourcegraph.com/sourcegraph/sourcegraph/app \
+    | fgrep sourcegraph.com/sourcegraph/sourcegraph/db
+
+
+
+
+
+
+* Application 3: distribution
+
+We want to ship a single static binary, but have to worry about assets like
+
+- template files
+- images
+- HTML/JavaScript/CSS
+
+and
+
+- environment variables
+
+
+
+
+* go-bindata
+
+Rolls static assets into your Go binary.
+
+  $ go get github.com/jteeuwen/go-bindata/...
+  $ go-bindata -ignore=data.go -prefix=app/templates -pkg=templates -o app/templates/data.go \
+    app/templates/...
+
+In code:
+
+   import "sourcegraph.com/sourcegraph/sourcegraph/app/templates"
+
+   func parseTemplates() {
+      ...
+      tmpl := template.New("")
+      tmplbytes, err := Asset("app/templates/main.html")
+      _, err = tmpl.Parse(string(tmplbytes))
+      ...
+   }
+
+
+* go-bindata
+
+During development, pass the *-dev* flag to generate code that reads from the underlying asset files, but presents the *same*interface* (so non-generated code doesn't have to change).
+
+  $ go-bindata -dev -ignore=data.go -prefix=app/templates -pkg=templates -o app/templates/data.go \
+    app/templates/...
+
+
+
+* go-envdata
+
+Like go-bindata, but sets defaults for environment variables.
+
+  $ go get github.com/beyang/go-envdata
+  $ env -i bash -c 'source ~/config.sh; go-envdata -pkg env -o env/env.go;'
+
+In code:
+
+   import _ "sourcegraph.com/sourcegraph/sourcegraph/env"
+
+   var baseURL = os.Getenv("BASE_URL")
+
+
+* What deployment looks like
+
+  $ curl https://hosting.sourcegraph.com/path/to/new/binary/of/sourcegraph
+  $ ./sourcegraph
+  Server listening on :80
+
+
+* Integrating metaprogramming into your dev cycle
+
+*Method*1*: go generate
+
+In code:
+
+   //go:generate <command> <args>
+
+Then run:
+
+   $ go generate
+
+
+* 
+
+*Method*2*: Makefile
+
+  .PHONY: dev dist generate-dev generate-dist test
+
+  dev: generate-dev
+        go install ./...
+
+  dist: generate-dist
+        goxc
+
+  generate-dev:
+        go-bindata -dev -ignore=data.go -prefix=app/templates -pkg=templates -o app/templates/data.go app/templates/...
+        go-envdata -dev -pkg env -o env/env.go
+
+  generate-dist:
+        go-bindata -ignore=data.go -prefix=app/templates -pkg=templates -o app/templates/data.go app/templates/...
+        env -i bash -c 'source ~/config.sh; go-envdata -pkg env -o env/env.go;'
+
+  test:
+        astquery-check-cmd
+        go test ./...
+
+
+
+* When shouldn't I use metaprogramming?
+
+With great power comes great responsibility.
+
+Tradeoffs:
+
+- can slow down build process
+- harder to debug
+- increased conceptual overhead
+
+*Principle:*think*of*the*reader*
+
+- generate human-readable code
+- don't require the reader to understand the metaprogramming technique
+- remember that code is written once, read many times
+
+* Go has great libraries for metaprogramming
+
+.image tools.svg
+
+Check out [[http://golang.org/x/tools]]
+
+(this slide plagiarized from [[http://talks.golang.org/2014/static-analysis.slide#8][Alan Donovan's talk]])
+
