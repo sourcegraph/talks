@@ -9,6 +9,16 @@ Sourcegraph
 @beyang
 @srcgraph
 
+# Abstract
+#
+# Metaprogramming, the process of writing programs that generate, modify, or analyze other
+# programs (or themselves), is often associated with languages like Ruby and C++. But
+# metaprogramming can be extremely useful in Go, as well, and Go has great libraries to
+# support it. This talk will go over a few examples of how metaprogramming can make your
+# life as a Go programmer easier, and how we've used these techniques to build, test, and
+# ship a large-scale Go web app.
+
+
 * What is metaprogramming?
 
 Programs that generate, modify, or analyze other programs.
