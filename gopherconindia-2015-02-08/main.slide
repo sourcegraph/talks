@@ -278,7 +278,7 @@ Can use go list to check package import structure. For example, enforce no direc
 * Go oracle
 # - one drawback is for this type of question, must be scoped to an entire program, which is slow on Sourcegraph's codebase
 
-Powerful library for asking questions about code.
+Powerful library/tool for asking questions about code.
 
 - interfaces satisfied by a type
 - possible concrete types of an interface variable
@@ -309,6 +309,7 @@ What about
 - JavaScript/CSS
 - static images
 - fonts
+- environment variables
 
 * go-bindata: roll static assets into the Go binary
 
@@ -318,7 +319,11 @@ Awesome library written by [[https://jteeuwen.nl/][Jim Teeuwen]]
   $ go-bindata -ignore=data.go -prefix=app/templates -pkg=templates -o app/templates/data.go \
     app/templates/...
 
-Generates code that you can call like:
+Static asset files stored as byte arrays:
+
+  var _layout_html = []byte("\x1f\x8b\x08\x00\x00\x09...\x00")
+
+Access the data liked this:
 
    import "sourcegraph.com/sourcegraph/sourcegraph/app/templates"
 
@@ -362,12 +367,24 @@ During development, pass the *-dev* flag to generate code that reads from the un
 
 * go-envdata
 
-Sets defaults for environment variables from dev environment or given existing config file:
+Sets defaults for environment variables from dev environment or existing config file:
 
   $ go get github.com/beyang/go-envdata
   $ env -i bash -c 'source ~/config.sh; go-envdata -pkg env -o env/env.go;'
 
-Import the generated package to initialize default environment variable values:
+Auto-generates code:
+
+  var defaults = map[string]string{}
+
+  func init() {
+    for k, v := range defaults {
+      if os.Getenv(k) == "" {
+        os.Setenv(k, v)
+      }
+    }
+  }
+
+Import the generated package for side effects:
 
    import _ "sourcegraph.com/sourcegraph/sourcegraph/env"
 
