@@ -43,7 +43,7 @@ meta ≠ complex
 Programming involves automating tedious, but important tasks.
 Metaprogramming involves automating tedious, but important programming tasks.
 
-- Sounds fancy, but actually not that fancy.
+- Doesn't have to be fancy.
 - More people should do it.
 
 
@@ -160,14 +160,15 @@ Mock pattern in Go:
 * gen-mocks: command-line tool to auto-generate code for mocks
 # More time to focus on the actual content of the tests.
 
-Used for [[https://sourcegraph.com/sourcegraph/go-sourcegraph][Sourcegraph's public API client]] and internal services.
+Used for [[https://sourcegraph.com/sourcegraph/go-sourcegraph][Sourcegraph's API client]] ([[https://sourcegraph.com/sourcegraph/go-sourcegraph]]) and internal services.
 
   $ go get sourcegraph.com/sourcegraph/gen-mocks
   $ gen-mocks -n=service -o=service/ -p=sourcegraph.com/sourcegraph/service
 
 For every file.go that contains a service interface, outputs file_mock.go.
 
-Uses go/ast and go/parser, just 200 lines.
+Just 200 lines of code:
+[[https://sourcegraph.com/sourcegraph/gen-mocks@master/.tree/gen_mocks.go]]
 
 
 
@@ -225,7 +226,12 @@ or forget to include the permissions check in new code.
   FAIL
   The above service methods failed to check permissions.
 
-[[github.com/beyang/go-astquery][go-astquery]], a set of convenience functions for querying the AST, 300 lines of code.
+[[https://sourcegraph.com/github.com/beyang/go-astquery][go-astquery]], a set of convenience functions for querying the AST, 300 lines of code.
+
+Learn by example:
+
+- [[https://sourcegraph.com/github.com/beyang/go-astquery/.GoPackage/github.com/beyang/go-astquery/.def/Find][astquery.Find(nodes, filter)]]
+- [[https://sourcegraph.com/github.com/golang/go/.GoPackage/go/parser/.def/ParseDir]]
 
 
 * Using go-astquery
@@ -255,12 +261,16 @@ or forget to include the permissions check in new code.
   }
 
 
-* go list
+* Checking package import structure
 # May want to check the package dependency structure of your codebase.
 # To enforce best practices, but maybe security implications.
 # Not a strict guarantee, but good sanity check. Can make it more complex/thorough if you want.
 
-Want to prevent direct access from app to db
+Want to prevent direct access from app to db package
+
+   package app
+
+   import "sourcegraph.com/sourcegraph/sourcegraph/db"
 
    func serveRepoPage(w http.ResponseWriter, r *http.Request) {
      ...
@@ -268,17 +278,17 @@ Want to prevent direct access from app to db
      ...
    }
 
-Can use go list to check package import structure. For example, enforce no direct access from app to db.
+Use go list to check package import structure:
 
   $ go list -f {{.Imports}} sourcegraph.com/sourcegraph/sourcegraph/app \
-    | grep database/sql
+    | grep sourcegraph.com/sourcegraph/sourcegraph/db
 
 
 
 * Go oracle
 # - one drawback is for this type of question, must be scoped to an entire program, which is slow on Sourcegraph's codebase
 
-Powerful library/tool for asking questions about code.
+Powerful library/tool for asking questions about code ([[https://sourcegraph.com/github.com/golang/tools@master/.tree/oracle][view source]]).
 
 - interfaces satisfied by a type
 - possible concrete types of an interface variable
@@ -287,7 +297,7 @@ Powerful library/tool for asking questions about code.
 - callstack, callgraph
 - channel peers
 
-Could also implement stronger permissions check using Go oracle.
+Could implement a stronger permissions check using Go oracle.
 Potential for many more static analysis tools here.
 
 (see [[http://talks.golang.org/2014/static-analysis.slide][Alan Donovan's excellent talk on the Go oracle]])
@@ -313,7 +323,7 @@ What about
 
 * go-bindata: roll static assets into the Go binary
 
-Awesome library written by [[https://jteeuwen.nl/][Jim Teeuwen]]
+Awesome library ([[https://sourcegraph.com/github.com/jteeuwen/go-bindata][github.com/jteeuwen/go-bindata]]) written by [[https://jteeuwen.nl/][Jim Teeuwen]]
 
   $ go get github.com/jteeuwen/go-bindata/...
   $ go-bindata -ignore=data.go -prefix=app/templates -pkg=templates -o app/templates/data.go \
@@ -444,7 +454,7 @@ Then run:
 Advantages
 
 - no external tool dependency
-- cross platform
+- cross-platform
 
 
 
@@ -452,24 +462,21 @@ Advantages
 # In other languages, metaprogramming can have a reputation as complex, "experts-only" territory, because it can be
 # easy to abuse. E.g., Ruby method_missing, Python function decorators, etc.
 
-Downsides
+Metaprogramming adds complexity
 
-- another step in build process
-- increased mental overhead, harder to debug
+- more steps in build process
+- increased mental overhead
+- harder to debug
 
-Principle 1: The complexity of the solution should be justified by the severity of the pain.
+Principle: Empathize with the reader.
 
-Principle 2: Think of the reader.
-
-- Remember that code is written once, read many times
-- So auto-generated code should ideally be human-readable
-- And shouldn't require the reader to understand the metaprogramming technique
+- Code is written once, read many times.
+- Auto-generated code should ideally be human-readable.
+- Avoid "magic".
 
 
 
 * Other examples of metaprogramming in Go
-# srclib is language independent analysis library to support code analysis tools across many different languages at
-# once. It is heavily inspired by the tools and analysis packages we've seen in the Go standard library.
 
 - [[http://golang.org/x/tools]]
 - [[https://github.com/golang/go/wiki/GoGenerateTools]]
@@ -489,9 +496,13 @@ A lot of these are short and sweet (200-300 lines of code).
 
 
 * Ideas for more metaprograms
+# - srclib is a cross-language analysis library that lets you write cross-language metaprograms
+# - one such metaprogram is Sourcegraph, also editor plugins
+# - inspired by analysis packages in Go standard library; srclib wants to make it as easy to build metaprograms across many languages as it is to build metaprograms in Go
+# - Main takeaway: metaprogramming in Go is both useful and accessible, and I hope you'll now go and create new awesome metaprograms and share them with the rest of the community.
 
 - Generate entire API client from curl and JSON examples.
-- Generate stub implementation that satisfies a set of interfaces.
-- Update existing implementations if a new method is added to an interface.
-- Visualizations for Go oracle callgraph, interface graph, channel peers, etc.
-- [[https://srclib.org][srclib]], a cross language (Go, Java, JavaScript, Python, Ruby, Haskell) analysis library that powers [[https://Sourcegraph.com]] and editor plugins, heavily inspired by Go analysis libraries and tools
+- Generate/update stub implementation that satisfies a set of interfaces.
+# - Update existing implementations if a new method is added to an interface.
+# - Visualizations for Go oracle callgraph, interface graph, channel peers, etc.
+- srclib ([[https://srclib.org]]), a cross-language (Go, Java, JavaScript, Python, Ruby, Haskell) analysis library that powers [[https://Sourcegraph.com]] and editor plugins, heavily inspired by Go analysis libraries and tools
