@@ -18,9 +18,21 @@ Sourcegraph
 # life as a Go programmer easier, and how we've used these techniques to build, test, and
 # ship a large-scale Go web app.
 
+* Liveblog!
 
+[[http://gophercon.sourcegraph.com]]
 
+Thanks to
 
+- Matthew Kanwisher (@kanwisher)
+- Niket Patel (@nexneo)
+- Julia Poladsky (@juliaallyce)
+- Bill Kennedy (@goinggodotnet)
+- Guillaume Charmes (@charme_g)
+- Mike Gehard (@mikegehard)
+- Alan Shreve (@inconshreveable)
+- Dave Cheney (@davecheney)
+- Gabriel Aszalos (@gabrielaszalos)
 
 * What is metaprogramming?
 
