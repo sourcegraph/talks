@@ -1,0 +1,75 @@
+Use gRPC Gateway to auto-generate your API server and client
+GopherCon 2015
+15:10 10 Jul 2015
+Tags: gophercon, go, sourcegraph
+
+Beyang Liu
+Sourcegraph
+[[https://sourcegraph.com]]
+[[https://github.com/sourcegraph/talks]]
+@beyang @shurcooL @slimsag @sqs
+@srcgraph
+
+* Sourcegraph: a hosted and on-prem code search and browsing tool for Go
+
+- [[https://sourcegraph.com]]
+- Fully linked code browser, semantic search over functions
+- Code review (beta) with fully linked diff
+
+Pre-release next-generation Sourcegraph
+
+- Downloadable as single static binary
+- Go to [[https://src.sgdev.org]] and follow the quick-start instructions in the footer.
+
+* Architecture
+
+.image gRPC_application_arch.png
+
+* gRPC Gateway
+
+Define your API in protobuf.
+
+API client (in multiple languages) and server are automatically code-generated
+
+Protobuf over HTTP/2 and HTTP/1
+
+- core data structures
+- endpoints
+- parameter structs
+
+* Code example
+
+From [[https://sourcegraph.com/sourcegraph/go-sourcegraph@nodb]]
+
+  // sourcegraph.proto
+
+  service Repos {
+    // Get fetches a repository.
+    rpc Get(RepoSpec) returns (Repo) {
+        option (google.api.http) = {
+               get: "/repos"
+        };
+  };
+
+becomes
+
+  // sourcegraph.pb.go
+
+  type ReposClient interface {
+    Get(ctx context.Context, in *RepoSpec, opts ...grpc.CallOption) (*Repo, error)
+  }
+
+  type ReposServer interface {
+    Get(context.Context, *RepoSpec) (*Repo, error)
+  }
+
+
+* See for yourself
+
+[[https://sourcegraph.com/sourcegraph.com/sourcegraph/go-sourcegraph@nodb/.tree/sourcegraph/sourcegraph.proto][sourcegraph.proto]] generates [[https://sourcegraph.com/sourcegraph/go-sourcegraph@nodb/.tree/sourcegraph/sourcegraph.pb.go][sourcegraph.pb.go]] by running *go*generate* in [[https://sourcegraph.com/sourcegraph.com/sourcegraph/go-sourcegraph@nodb/.tree/sourcegraph/gen.go][gen.go]].
+
+* Other cool things we use
+
+- [[https://sourcegraph.com/github.com/laher/goxc][goxc]] to cross compile
+- [[https://sourcegraph.com/github.com/jteeuwen/go-bindata][go-bindata]] to compile static assets into the binary
+- [[https://sourcegraph.com/sourcegraph/gen-mocks][genmocks]] to generate mocks for testing
