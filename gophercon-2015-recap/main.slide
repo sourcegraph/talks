@@ -13,13 +13,14 @@ Sourcegraph
 
 Denver Convention Center
 
-1,500 attendees (up from ~700 last year)
+1,500 attendees (up from 700 last year)
 
-Some large companies using Go
+Great companies using Go
 
+- Docker, CoreOS, Twitch, Mesosphere, Datadog, InfluxDB, Sourcegraph
 - Verizon, Comcast, Aetna, HealthCare.gov, Cisco
 
-The media was there! (sort of): [[https://changelog.com/][The Changelog]]
+[[https://sourcegraph.com/blog/live/gophercon2015/][Sourcegraph liveblog]]
 
 * Themes
 
@@ -29,11 +30,19 @@ The media was there! (sort of): [[https://changelog.com/][The Changelog]]
 
 * Community
 
+"Go can be the most inclusive community in the tech industry." - Andrew Gerrand
+
 - [[https://sourcegraph.com/blog/live/gophercon2015/123554816390][Opening Keynote (Russ Cox)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123748269730][Closing Keynote: How Go was Made (Andrew Gerrand)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123565059490][How a complete beginner learned Go as her first backend language in 5 weeks (Audrey Lim)]]
 
 * History
+
+"Do less. Enable more." - Russ Cox
+
+"The task of the programming language designer is consolidation, not innovation." - C.A.R. Hoare.
+
+Algol 60, Pascal, C, Modula, Oberon
 
 - [[https://sourcegraph.com/blog/live/gophercon2015/123645585015][The Evolution of Go (Robert Griesemer)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123748269730][Closing Keynote: How Go was Made (Andrew Gerrand)]]
@@ -41,6 +50,8 @@ The media was there! (sort of): [[https://changelog.com/][The Changelog]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123650343815][The Roots of Go (Baishampayan Ghose)]]
 
 * Enterprise
+
+"We (re)wrote our system in Go, and it runs much faster now."
 
 - [[https://sourcegraph.com/blog/live/gophercon2015/123558971785][Go Kit (Peter Bourgon)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123580608610][Practical guide to preventing deadlocks and leaks (Richard Fliam)]]
@@ -51,17 +62,26 @@ The media was there! (sort of): [[https://changelog.com/][The Changelog]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123673663120][Betting the Company on Go and Winning (Kelsey Hightower)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123669128965][Cayley: Building a Graph Database (Barak Michener)]]
 
-* Useful tools, best practices, new features
+* Useful tools, new features, best practices
 
-- [[https://sourcegraph.com/blog/live/gophercon2015/123586421955][What Could Go Wrong? (Kevin Cantwell)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123656134615][Go Dynamic Tools (Dmitry Vyukov)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123562904395][Delve (Derek Parker)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123647724025][Static Code Analysis Using SSA (Ben Johnson)]]
-- [[https://sourcegraph.com/blog/live/gophercon2015/123655003560][Embrace the interface (Tomás Senart)]]
-- [[https://sourcegraph.com/blog/live/gophercon2015/123666630710][Code Generation For The Sake Of Consistency (Sarah Adams)]]
-- [[https://sourcegraph.com/blog/live/gophercon2015/123669868275][The Many Faces of Struct Tags (Sam Helman & Kyle Erf)]]
-- [[https://sourcegraph.com/blog/live/gophercon2015/123574706480][Go 1.5 GC (Rick Hudson)]]
+
 - [[https://sourcegraph.com/blog/live/gophercon2015/123653512740][Go for mobile devices (Hana Kim)]]
-- [[https://sourcegraph.com/blog/live/gophercon2015/123656134615][Go Dynamic Tools (Dmitry Vyukov)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123574706480][Go 1.5 GC (Rick Hudson)]]
+
+- [[https://sourcegraph.com/blog/live/gophercon2015/123729228805][Simplicity and Go (Katherine Cox-Buday)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123655003560][Embrace the interface (Tomás Senart)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123669868275][The Many Faces of Struct Tags (Sam Helman & Kyle Erf)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123666630710][Code Generation For The Sake Of Consistency (Sarah Adams)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123586421955][What Could Go Wrong? (Kevin Cantwell)]]
+
+* Lightning talks
+
+[[https://sourcegraph.com/blog/live/gophercon2015/][Lightning talks here]]
+
+Many thanks to Bill Kennedy ([[https://twitter.com/goinggodotnet][@goinggodotnet]]) for covering these.
 
 * Looking forward
 
