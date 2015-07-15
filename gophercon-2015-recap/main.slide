@@ -11,52 +11,64 @@ Sourcegraph
 
 * GopherCon 2015
 
-- 1,500 attendees (up from ~700 last year)
-- Some large organizations using Go
-  - Verizon, Comcast, Aetna, HealthCare.gov, Cisco
-- The media was there! (sort of)
+Denver Convention Center
+
+1,500 attendees (up from ~700 last year)
+
+Some large companies using Go
+
+- Verizon, Comcast, Aetna, HealthCare.gov, Cisco
+
+The media was there! (sort of): [[https://changelog.com/][The Changelog]]
 
 * Themes
 
 - Community
-- Enterprise
 - History
+- Enterprise
 
 * Community
 
-- [[Opening Keynote (Russ Cox)]][https://sourcegraph.com/blog/live/gophercon2015/123554816390]
-- [[Closing Keynote: How Go was Made (Andrew Gerrand)][https://sourcegraph.com/blog/live/gophercon2015/123748269730]]
-- [[How a complete beginner learned Go as her first backend language in 5 weeks (Audrey Lim)][https://sourcegraph.com/blog/live/gophercon2015/123565059490]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123554816390][Opening Keynote (Russ Cox)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123748269730][Closing Keynote: How Go was Made (Andrew Gerrand)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123565059490][How a complete beginner learned Go as her first backend language in 5 weeks (Audrey Lim)]]
 
 * History
 
-- [[The Evolution of Go (Robert Griesemer)][https://sourcegraph.com/blog/live/gophercon2015/123645585015]]
-- [[Closing Keynote: How Go was Made (Andrew Gerrand)][https://sourcegraph.com/blog/live/gophercon2015/123748269730]]
-- [[Opening Keynote (Russ Cox)]][https://sourcegraph.com/blog/live/gophercon2015/123554816390]
-- [[The Roots of Go (Baishampayan Ghose)][https://sourcegraph.com/blog/live/gophercon2015/123650343815]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123645585015][The Evolution of Go (Robert Griesemer)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123748269730][Closing Keynote: How Go was Made (Andrew Gerrand)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123554816390][Opening Keynote (Russ Cox)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123650343815][The Roots of Go (Baishampayan Ghose)]]
 
 * Enterprise
 
-- [[Go Kit (Peter Bourgon)][https://sourcegraph.com/blog/live/gophercon2015/123558971785]]
-- [[Practical guide to preventing deadlocks and leaks (Richard Fliam)][https://sourcegraph.com/blog/live/gophercon2015/123580608610]]
-- [[Simplicity and Go (Katherine Cox-Buday)][https://sourcegraph.com/blog/live/gophercon2015/123729228805]
-- [[Rebuilding Parse in Go (Abhishek Kona)][https://sourcegraph.com/blog/live/gophercon2015/123579311585]]
-- [[Prometheus: Designing and Implementing a Modern Monitoring Solution in Go (Björn Rabenstein)][https://sourcegraph.com/blog/live/gophercon2015/123585389750]]
-- [[Uptime: Building Resilient Services with Go (Blake Caldwell)][https://sourcegraph.com/blog/live/gophercon2015/123664481750]]
-- [[Betting the Company on Go and Winning (Kelsey Hightower)][https://sourcegraph.com/blog/live/gophercon2015/123673663120]]
-- [[Cayley: Building a Graph Database (Barak Michener)][https://sourcegraph.com/blog/live/gophercon2015/123669128965]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123558971785][Go Kit (Peter Bourgon)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123580608610][Practical guide to preventing deadlocks and leaks (Richard Fliam)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123729228805][Simplicity and Go (Katherine Cox-Buday)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123579311585][Rebuilding Parse in Go (Abhishek Kona)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123585389750][Prometheus: Designing and Implementing a Modern Monitoring Solution in Go (Björn Rabenstein)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123664481750][Uptime: Building Resilient Services with Go (Blake Caldwell)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123673663120][Betting the Company on Go and Winning (Kelsey Hightower)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123669128965][Cayley: Building a Graph Database (Barak Michener)]]
 
 * Useful tools, best practices, new features
 
-- [[What Could Go Wrong? (Kevin Cantwell)][https://sourcegraph.com/blog/live/gophercon2015/123586421955]]
-- [[Delve (Derek Parker)][https://sourcegraph.com/blog/live/gophercon2015/123562904395]]
-- [[Static Code Analysis Using SSA (Ben Johnson)][https://sourcegraph.com/blog/live/gophercon2015/123647724025]]
-- [[Embrace the interface (Tomás Senart)][https://sourcegraph.com/blog/live/gophercon2015/123655003560]]
-- [[Code Generation For The Sake Of Consistency (Sarah Adams)][https://sourcegraph.com/blog/live/gophercon2015/123666630710]]
-- [[The Many Faces of Struct Tags (Sam Helman & Kyle Erf)][https://sourcegraph.com/blog/live/gophercon2015/123669868275]]
-- [[Go 1.5 GC (Rick Hudson)][https://sourcegraph.com/blog/live/gophercon2015/123574706480]]
-- [[Go for mobile devices (Hana Kim)][https://sourcegraph.com/blog/live/gophercon2015/123653512740]]
-- [[Go Dynamic Tools (Dmitry Vyukov)][https://sourcegraph.com/blog/live/gophercon2015/123656134615]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123586421955][What Could Go Wrong? (Kevin Cantwell)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123562904395][Delve (Derek Parker)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123647724025][Static Code Analysis Using SSA (Ben Johnson)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123655003560][Embrace the interface (Tomás Senart)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123666630710][Code Generation For The Sake Of Consistency (Sarah Adams)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123669868275][The Many Faces of Struct Tags (Sam Helman & Kyle Erf)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123574706480][Go 1.5 GC (Rick Hudson)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123653512740][Go for mobile devices (Hana Kim)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123656134615][Go Dynamic Tools (Dmitry Vyukov)]]
 
 * Looking forward
 
+.image golang_trends.png 500 925
+
+* Special thanks to
+
+[[https://twitter.com/goinggodotnet][@goinggodotnet]]
+[[https://twitter.com/inconshreveable][@inconshreveable]]
+[[https://twitter.com/dencold][@dencold]]
