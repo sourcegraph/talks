@@ -32,17 +32,27 @@ Great companies using Go
 
 "Go can be the most inclusive community in the tech industry." - Andrew Gerrand
 
-- [[https://sourcegraph.com/blog/live/gophercon2015/123554816390][Opening Keynote (Russ Cox)]]
+Code of Conduct
+
+Change proposal process
+
 - [[https://sourcegraph.com/blog/live/gophercon2015/123748269730][Closing Keynote: How Go was Made (Andrew Gerrand)]]
+- [[https://sourcegraph.com/blog/live/gophercon2015/123554816390][Opening Keynote (Russ Cox)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123565059490][How a complete beginner learned Go as her first backend language in 5 weeks (Audrey Lim)]]
 
 * History
 
+Algol 60, Pascal, C, Modula, Oberon
+
+"What should a modern programming language look like?"
+
+"Most language features proposed early on were rejected." - Andrew Gerrand
+
 "Do less. Enable more." - Russ Cox
 
-"The task of the programming language designer is consolidation, not innovation." - C.A.R. Hoare.
+"The task of the programming language designer is consolidation, not innovation." - C.A.R. Hoare
 
-Algol 60, Pascal, C, Modula, Oberon
+"It’s still early days." - Andrew Gerrand
 
 - [[https://sourcegraph.com/blog/live/gophercon2015/123645585015][The Evolution of Go (Robert Griesemer)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123748269730][Closing Keynote: How Go was Made (Andrew Gerrand)]]
@@ -51,11 +61,12 @@ Algol 60, Pascal, C, Modula, Oberon
 
 * Enterprise
 
+"Go can be the language of choice at the application layer, where the business logic lives."
+
 "We (re)wrote our system in Go, and it runs much faster now."
 
 - [[https://sourcegraph.com/blog/live/gophercon2015/123558971785][Go Kit (Peter Bourgon)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123580608610][Practical guide to preventing deadlocks and leaks (Richard Fliam)]]
-- [[https://sourcegraph.com/blog/live/gophercon2015/123729228805][Simplicity and Go (Katherine Cox-Buday)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123579311585][Rebuilding Parse in Go (Abhishek Kona)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123585389750][Prometheus: Designing and Implementing a Modern Monitoring Solution in Go (Björn Rabenstein)]]
 - [[https://sourcegraph.com/blog/live/gophercon2015/123664481750][Uptime: Building Resilient Services with Go (Blake Caldwell)]]
@@ -86,6 +97,10 @@ Many thanks to Bill Kennedy ([[https://twitter.com/goinggodotnet][@goinggodotnet
 * Looking forward
 
 .image golang_trends.png 500 925
+
+* Long way to go!
+
+.image golang_vs_other.png 350 925
 
 * Special thanks to
 
