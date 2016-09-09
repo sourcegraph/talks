@@ -1,0 +1,82 @@
+A good way of thinking about commit messages
+Eng Best Practice 6 min talk
+12:20 9 Sep 2016
+
+Dmitri Shuralyov
+Sourcegraph
+dmitri@sourcegraph.com
+https://dmitri.shuralyov.com
+@shurcooL
+
+* Tip to make you a better engineer
+
+- You like yourself more
+- Others like you more
+
+* Best practice
+
+A best practice is to repeat best practices occasionally (otherwise they're lost and forgotten).
+
+* Commit messages
+
+What's in a commit message.
+
+Commit messages are like packages that wrap your hard work, effort, time
+into something small and neat. They communicate to others what your
+commit is about, and give the opportunity to elaborate and provide more detail.
+
+If you care about your commit, you probably should care about the commit message.
+
+* Commit messages
+
+This talk is basically a glorified link to:
+
+.link http://chris.beams.io/posts/git-commit/ http://chris.beams.io/posts/git-commit/
+
+Read that blog post, it's a great description of how to make your commit messages
+more effective. It's a great reference to read up every couple of months.
+
+* Commit log
+
+	Commit title 1
+	Commit title 2
+	Commit title 3
+	Commit title 4
+	Commit title 5
+
+* Commit message
+
+	Commit title 1
+
+	Long description that explains stuff
+	and spans multiple lines here.
+
+	Even multiple paragraph can be here.
+
+* Commit message
+
+A good way to think about a commit message is that it's split into two parts.
+
+The _what_, and the _why_.
+
+Only the what goes into the commit title. It's a really brief phrase
+describing what changed.
+
+The extended commit message explains _why_ it was useful to make that change.
+
+* Commit message
+
+	The *what*. What this commit changes.
+
+	The *why*.
+	Most importantly, describe here the why!
+	Why are you changing that?
+	Why did you make this commit?
+	What's your motivation?
+	What would happen if this commit isn't merged?
+	Would you mind if this commit were simply reverted? Why?
+	Why, why, why.
+	At minimum, have _one sentence_ describing the why!
+	It's easy if you just keep that in mind.
+
+	(More about the "what" can also go here if needed.)
