@@ -1,7 +1,6 @@
 package javascript
 
 import (
-	"io/ioutil"
 	"log"
 	"regexp"
 
@@ -15,7 +14,7 @@ type JSAnalyzer struct{}
 var jsdef = regexp.MustCompile(`(var|function) (\w+)`)
 
 func (_ JSAnalyzer) Analyze(file string) ([]*lang.Def, []*lang.Ref, error) { // HL
-	src, err := ioutil.ReadFile(file)
+	src, err := os.ReadFile(file)
 	if err != nil {
 		log.Fatal(err)
 	}
